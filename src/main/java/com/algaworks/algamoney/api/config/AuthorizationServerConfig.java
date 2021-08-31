@@ -1,5 +1,7 @@
 package com.algaworks.algamoney.api.config;
 
+import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,20 +10,18 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
+import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 
+import com.algaworks.algamoney.api.config.token.CustomTokenEnhancer;
 
-
-@SuppressWarnings("deprecation")
 
 @Profile("oauth-security")
 @Configuration
-@EnableAuthorizationServer
 public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter{
 
 	@Autowired
@@ -52,20 +52,17 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	@Override
 	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 		TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
-		//tokenEnhancerChain.setTokenEnhancers(Arrays.asList(tokenEnhancer(), accessTokenConverter()));
+		tokenEnhancerChain.setTokenEnhancers(Arrays.asList(tokenEnhancer(), accessTokenConverter()));
 		
 		endpoints
 			.tokenStore(tokenStore())
 			.tokenEnhancer(tokenEnhancerChain)
 			.reuseRefreshTokens(false)
 			.authenticationManager(authenticationManager);
-
 	}
 	
-	private Object tokenEnhancer() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
+	
 
 	@Bean 
 	public JwtAccessTokenConverter accessTokenConverter() {
@@ -73,16 +70,18 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 		accessTokenConverter.setSigningKey("88CB851F47F64DE11ED656D75B6FA9A72FA8787A45A7FBA4783D3F5D59326DA875EB174BFA12C53D4762768");
 		return accessTokenConverter;
 	}
+	
+	private TokenEnhancer tokenEnhancer() {
+		
+		return new CustomTokenEnhancer();
+	}
 
 	@Bean
 	public TokenStore tokenStore() {
 		return new JwtTokenStore(accessTokenConverter());
 	}
 	
-	/*@Bean
-	public TokenEnhancer tokenEnhancer() {
-		 
-		return new CustomTokenEnhancer();
-	}
-*/
+
+
+
 }
